@@ -1,0 +1,39 @@
+name: Run Puppeteer Script
+
+on:
+  workflow_dispatch: # manually run karne ke liye
+
+jobs:
+  run-puppeteer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Chromium dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libatk-bridge2.0-0 \
+            libx11-xcb1 \
+            libxcomposite1 \
+            libxcursor1 \
+            libxdamage1 \
+            libxi6 \
+            libxtst6 \
+            libdrm2 \
+            libgbm1 \
+            libasound2
+
+      - name: Install npm packages
+        run: npm install
+
+      - name: Run Puppeteer script
+        run: npm start
