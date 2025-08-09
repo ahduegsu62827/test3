@@ -30,7 +30,8 @@ jobs:
             libxtst6 \
             libdrm2 \
             libgbm1 \
-            libasound2
+            libasound2t64
+
 
       - name: Install npm packages
         run: npm install
