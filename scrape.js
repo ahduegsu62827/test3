@@ -1,233 +1,47 @@
-// const puppeteer = require('puppeteer');
+name: Scrape APK Data
 
-// async function scrapeApkpureData(url) {
-//   let browser;
-//   try {
-//     // Launch headless browser
-//     browser = await puppeteer.launch({
-//       headless: true,
-//       args: ['--no-sandbox', '--disable-setuid-sandbox', '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36']
-//     });
-//     const page = await browser.newPage();
+on:
+  workflow_dispatch: # Allows manual triggering
 
-//     // Set additional headers
-//     await page.setExtraHTTPHeaders({
-//       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-//       'Accept-Language': 'en-US,en;q=0.5',
-//       'Referer': 'https://apkpure.com/'
-//     });
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
 
-//     // Navigate to the URL
-//     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-//     // Extract appId from URL
-//     const appId = url.match(/\/([^/]+)\/download$/)?.[1] || 'Not found';
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
 
-//     // Extract app size
-//     const appSize = await page.evaluate(() => {
-//       const sizeElement = document.querySelector('ul.dev-partnership-head-info li div.head');
-//       return sizeElement ? sizeElement.textContent.trim() : 'Not found';
-//     });
+    - name: Install dependencies
+      run: |
+        npm install puppeteer@22.15.0
 
-//     // Extract app version
-//     const appVersion = await page.evaluate(() => {
-//       const sizeElement = document.querySelector('span.version-name');
-//       return sizeElement ? sizeElement.textContent.trim() : 'Not found';
-//     });
+    - name: Install system dependencies for Puppeteer
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ca-certificates fonts-liberation libappindicator3-1 libasound2t64 libatk-bridge2.0-0 \
+          libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 \
+          libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 libpangocairo-1.0-0 \
+          libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 \
+          libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 lsb-release \
+          wget xdg-utils
 
-//     // Extract required Android version
-//     const requiresAndroid = await page.evaluate(() => {
-//       const elements = document.querySelectorAll('div.more-information-container ul li div.info div.value.double-lines');
-//       for (const element of elements) {
-//         const label = element.parentElement.querySelector('div.label.one-line')?.textContent.trim();
-//         if (label === 'Requires Android') {
-//           const fullText = element.textContent.trim();
-//           // Extract only the version number (e.g., "9.0+" from "Android 9.0+ (P, API 28)")
-//           const match = fullText.match(/(\d+\.\d+\+)/);
-//           return match ? match[1] : 'Not found';
-//         }
-//       }
-//       return 'Not found';
-//     });
+    - name: Run Puppeteer script
+      run: |
+        node scrape.js
+      env:
+        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: false
 
-//     // Return scraped data
-//     return {
-//       appId: appId,  
-//       appSize: appSize,
-//       requires_android: requiresAndroid,
-//       appVersion: appVersion,
-//     };
-
-//   } catch (error) {
-//     console.error(`Error scraping ${url}: ${error.message}`);
-//     return null;
-//   } finally {
-//     if (browser) {
-//       await browser.close();
-//     }
-//   }
-// }
-
-// // Test the function with the example link
-// (async () => {
-//   const url = 'https://apkpure.com/tiktok-musically-2024/com.zhiliaoapp.musically/download';
-//   const result = await scrapeApkpureData(url);
-
-//   if (result) {
-//     console.log(`App ID: ${result.appId}`);
-//     console.log(`App Size: ${result.appSize}`);
-//     console.log(`Requires Android: ${result.requires_android}`);
-//     console.log(`App Version: ${result.appVersion}`);
-//   } else {
-//     console.log('Failed to scrape data.');
-//   }
-// })();
-
-
-const puppeteer = require('puppeteer');
-const fs = require('fs').promises;
-
-async function scrapeApkpureData(url) {
-  let browser;
-  try {
-    // Launch headless browser
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
-        '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process'
-      ]
-    });
-    const page = await browser.newPage();
-
-    // Set additional headers
-    await page.setExtraHTTPHeaders({
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.5',
-      'Referer': 'https://apkpure.com/'
-    });
-
-    // Navigate to the URL
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-
-    // Take a screenshot for debugging
-    try {
-      await page.screenshot({ path: 'screenshot.png', fullPage: true });
-      console.log('Screenshot saved as screenshot.png');
-    } catch (err) {
-      console.error('Failed to save screenshot:', err.message);
-    }
-
-    // Delay to allow dynamic content to load
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Extract appId from URL
-    const appId = url.match(/\/([^/]+)\/download$/)?.[1] || 'Not found';
-
-    // Extract app size (try multiple selectors)
-    const appSize = await page.evaluate(() => {
-      const selectors = [
-        'ul.dev-partnership-head-info li div.head',
-        'div.download-box p.size',
-        'span.file-size',
-        'p.app-size' // Added for Instagram page
-      ];
-      for (const selector of selectors) {
-        const element = document.querySelector(selector);
-        if (element) return element.textContent.trim();
-      }
-      return 'Not found';
-    });
-
-    // Extract app version
-    const appVersion = await page.evaluate(() => {
-      const selectors = [
-        'span.version-name',
-        'div.version-info',
-        'p.version',
-        'span.app-version' // Added for Instagram page
-      ];
-      for (const selector of selectors) {
-        const element = document.querySelector(selector);
-        if (element) return element.textContent.trim();
-      }
-      return 'Not found';
-    });
-
-    // Extract required Android version
-    const requiresAndroid = await page.evaluate(() => {
-      const selectors = [
-        'div.more-information-container ul li div.info div.value.double-lines',
-        'div.info-item div.label:contains("Requires Android") + div.value',
-        'p.requires-android',
-        'div.requirements span' // Added for Instagram page
-      ];
-      for (const selector of selectors) {
-        const elements = document.querySelectorAll(selector);
-        for (const element of elements) {
-          const label = element.parentElement.querySelector('div.label.one-line')?.textContent.trim() || 
-                        element.parentElement.textContent.includes('Requires Android') ? 'Requires Android' : '';
-          if (label === 'Requires Android') {
-            const fullText = element.textContent.trim();
-            const match = fullText.match(/(\d+\.\d+\+)/);
-            return match ? match[1] : 'Not found';
-          }
-        }
-      }
-      return 'Not found';
-    });
-
-    // Save page content for debugging
-    try {
-      const pageContent = await page.content();
-      await fs.writeFile('page.html', pageContent);
-      console.log('Page HTML saved as page.html');
-    } catch (err) {
-      console.error('Failed to save page HTML:', err.message);
-    }
-
-    // Return scraped data
-    const result = {
-      appId,
-      appSize,
-      requires_android: requiresAndroid,
-      appVersion,
-    };
-
-    // Save result to output.json
-    try {
-      await fs.writeFile('output.json', JSON.stringify(result, null, 2));
-      console.log('Results saved to output.json');
-    } catch (err) {
-      console.error('Failed to save output.json:', err.message);
-    }
-
-    return result;
-
-  } catch (error) {
-    console.error(`Error scraping ${url}: ${error.message}`);
-    return null;
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
-  }
-}
-
-// Test the function with the example link
-(async () => {
-  const url = 'https://apkpure.com/instagram-android/com.instagram.android/download';
-  const result = await scrapeApkpureData(url);
-
-  if (result) {
-    console.log(`App ID: ${result.appId}`);
-    console.log(`App Size: ${result.appSize}`);
-    console.log(`Requires Android: ${result.requires_android}`);
-    console.log(`App Version: ${result.appVersion}`);
-  } else {
-    console.log('Failed to scrape data.');
-  }
-})();
+    - name: Upload results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: scrape-results
+        path: |
+          output.json
+          screenshot.png
+          page.html
