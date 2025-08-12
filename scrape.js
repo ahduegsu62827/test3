@@ -110,25 +110,30 @@ async function scrapeApkpureData(url) {
       'Referer': 'https://apkpure.com/'
     });
 
-    // Navigate to the URL with increased timeout
+    // Navigate to the URL
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Take a screenshot for debugging
-    await page.screenshot({ path: 'screenshot.png', fullPage: true });
-    console.log('Screenshot saved as screenshot.png');
+    try {
+      await page.screenshot({ path: 'screenshot.png', fullPage: true });
+      console.log('Screenshot saved as screenshot.png');
+    } catch (err) {
+      console.error('Failed to save screenshot:', err.message);
+    }
+
+    // Delay to allow dynamic content to load
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Extract appId from URL
     const appId = url.match(/\/([^/]+)\/download$/)?.[1] || 'Not found';
-
-    // Wait for potential dynamic content
-    await page.waitForTimeout(2000); // Wait 2 seconds for dynamic content
 
     // Extract app size (try multiple selectors)
     const appSize = await page.evaluate(() => {
       const selectors = [
         'ul.dev-partnership-head-info li div.head',
-        'div.download-box p.size', // Alternative selector
-        'span.file-size', // Another possible selector
+        'div.download-box p.size',
+        'span.file-size',
+        'p.app-size' // Added for Instagram page
       ];
       for (const selector of selectors) {
         const element = document.querySelector(selector);
@@ -141,8 +146,9 @@ async function scrapeApkpureData(url) {
     const appVersion = await page.evaluate(() => {
       const selectors = [
         'span.version-name',
-        'div.version-info', // Alternative selector
-        'p.version', // Another possible selector
+        'div.version-info',
+        'p.version',
+        'span.app-version' // Added for Instagram page
       ];
       for (const selector of selectors) {
         const element = document.querySelector(selector);
@@ -155,13 +161,15 @@ async function scrapeApkpureData(url) {
     const requiresAndroid = await page.evaluate(() => {
       const selectors = [
         'div.more-information-container ul li div.info div.value.double-lines',
-        'div.info-item div.label:contains("Requires Android") + div.value', // Alternative
-        'p.requires-android', // Another possible selector
+        'div.info-item div.label:contains("Requires Android") + div.value',
+        'p.requires-android',
+        'div.requirements span' // Added for Instagram page
       ];
       for (const selector of selectors) {
         const elements = document.querySelectorAll(selector);
         for (const element of elements) {
-          const label = element.parentElement.querySelector('div.label.one-line')?.textContent.trim();
+          const label = element.parentElement.querySelector('div.label.one-line')?.textContent.trim() || 
+                        element.parentElement.textContent.includes('Requires Android') ? 'Requires Android' : '';
           if (label === 'Requires Android') {
             const fullText = element.textContent.trim();
             const match = fullText.match(/(\d+\.\d+\+)/);
@@ -172,10 +180,14 @@ async function scrapeApkpureData(url) {
       return 'Not found';
     });
 
-    // Log page content for debugging
-    const pageContent = await page.content();
-    await fs.writeFile('page.html', pageContent);
-    console.log('Page HTML saved as page.html');
+    // Save page content for debugging
+    try {
+      const pageContent = await page.content();
+      await fs.writeFile('page.html', pageContent);
+      console.log('Page HTML saved as page.html');
+    } catch (err) {
+      console.error('Failed to save page HTML:', err.message);
+    }
 
     // Return scraped data
     const result = {
@@ -186,8 +198,12 @@ async function scrapeApkpureData(url) {
     };
 
     // Save result to output.json
-    await fs.writeFile('output.json', JSON.stringify(result, null, 2));
-    console.log('Results saved to output.json');
+    try {
+      await fs.writeFile('output.json', JSON.stringify(result, null, 2));
+      console.log('Results saved to output.json');
+    } catch (err) {
+      console.error('Failed to save output.json:', err.message);
+    }
 
     return result;
 
