@@ -203,7 +203,7 @@ async function scrapeApkpureData(url) {
 
 // Test the function with the example link
 (async () => {
-  const url = 'https://apkpure.com/tiktok-musically-2024/com.zhiliaoapp.musically/download';
+  const url = 'https://apkpure.com/instagram-android/com.instagram.android/download';
   const result = await scrapeApkpureData(url);
 
   if (result) {
