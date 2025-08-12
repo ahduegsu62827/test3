@@ -37,8 +37,11 @@ jobs:
         PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: false
 
     - name: Upload results
-      if: success()
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: scrape-results
-        path: output.json # Adjust if your script saves output to a file
+        path: |
+          output.json
+          screenshot.png
+          page.html
