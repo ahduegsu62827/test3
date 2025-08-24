@@ -1,26 +1,31 @@
-name: Update JSON
+name: Test JSON Update
 
 on:
-  workflow_dispatch:   # Manual trigger (आप खुद चला सकते हैं)
-  schedule:
-    - cron: "0 * * * *"   # हर घंटे चलेगा (optional)
+  workflow_dispatch:   # manually run karne ke liye
 
 jobs:
   update-json:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update JSON
+      - name: Show current JSON
+        run: cat progress.json
+
+      - name: Update JSON (increment lastIndex by 1)
         run: |
-          # jq से JSON update
-          jq '.enabled = false | .count += 1' data.json > tmp.json && mv tmp.json data.json
+          jq '.lastIndex += 1' progress.json > tmp.json && mv tmp.json progress.json
+          echo "Updated progress.json"
+          cat progress.json
 
-      - name: Commit changes
+      - name: Commit and Push changes
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add data.json
-          git commit -m "Update JSON file"
+          git add progress.json
+          git commit -m "Increment lastIndex"
           git push
