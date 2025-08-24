@@ -14,8 +14,8 @@ const processApps = async () => {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth() + 1;
     const currentDay = currentDate.getDate();
-    const startDay = 24; // Configure start day of the month (e.g., 1 for days 1-3)
-    const endDay = 27;   // Configure end day of the month
+    const startDay = 25; // Configure start day of the month (e.g., 1 for days 1-3)
+    const endDay = 28;   // Configure end day of the month
 
     if (currentDay < startDay || currentDay > endDay) {
       console.log("Not within the specified days of the month.");
