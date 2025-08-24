@@ -1,31 +1,26 @@
-name: Test JSON Update
+name: Update Playstore Apps
 
 on:
-  workflow_dispatch:   # manually run karne ke liye
+  schedule:
+    - cron: '0 */2 * 1-3 *'  # Every 2 hours on days 1-3 of every month
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
-  update-json:
+  update:
     runs-on: ubuntu-latest
-
+    env:
+      MONGO_URI: ${{ secrets.MONGO_URI }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Show current JSON
-        run: cat progress.json
-
-      - name: Update JSON (increment lastIndex by 1)
-        run: |
-          jq '.lastIndex += 1' progress.json > tmp.json && mv tmp.json progress.json
-          echo "Updated progress.json"
-          cat progress.json
-
-      - name: Commit and Push changes
+          node-version: '20'
+      - run: npm install
+      - run: node index.js  # Assuming the code is saved as index.js
+      - name: Commit and push if changed
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add progress.json
-          git commit -m "Increment lastIndex"
-          git push
+          git commit -m "Update progress.json" || echo "No changes to commit"
+          git push || echo "No changes to push"
