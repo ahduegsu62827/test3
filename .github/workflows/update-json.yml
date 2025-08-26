@@ -2,7 +2,7 @@ name: Run Script 3 Days
 
 on:
   schedule:
-    - cron: "0 */2 26-29 * *" # हर 2 घंटे में, हर महीने 24 से 27 तारीख तक
+    - cron: "0 */2 27-30 * *" # हर 2 घंटे में, हर महीने 24 से 27 तारीख तक
   workflow_dispatch:
 
 jobs:
