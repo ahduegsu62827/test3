@@ -259,6 +259,7 @@ const processApps = async () => {
 
         const existingApp = await appsCollection.findOne({ appId: app.appId });
         if (!existingApp) {
+          console.log(`App ${app.appId} not found in database, skipping insert as per requirement`)
           continue;
         } else if (existingApp.version !== appData.version || appData.version === 'VARY') {
           const updatedApp = {
@@ -274,9 +275,11 @@ const processApps = async () => {
           };
           await appsCollection.updateOne({ appId: app.appId }, { $set: updatedApp });
           await backupCollection.updateOne({ appId: app.appId }, { $set: updatedApp });
+          console.log(`Updated app: ${app.appId}`);
           updatedCount++;
           updatedApps.push(appData.title);
         } else {
+          console.log(`No changes for app: ${app.appId}`);
           noChangeCount++;
           noChange.push(appData.title);
         }
@@ -288,6 +291,7 @@ const processApps = async () => {
       const randomDelay = (Math.random() * (3 - 1) + 1) * 1000;
       console.log(`Taking random break of ${(randomDelay / 1000).toFixed(2)}s...`);
       await new Promise(resolve => setTimeout(resolve, randomDelay));
+      console.log(`Taking 2 seconds break after processing batch starting at index ${i}...`);
 
       // Save progress
       progress = {
