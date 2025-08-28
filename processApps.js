@@ -13,7 +13,7 @@ const processApps = async () => {
     await client.connect();
     const db = client.db('android');
     const backupDB = client.db('backup');
-    const slugAppIdCollection = db.collection('slugAndappId');
+    const slugAppIdCollection = db.collection('testSlug');
     const appsCollection = db.collection('playstoreapps');
     const backupCollection = backupDB.collection('playstoreappsBackup');
     const logCollection = db.collection('log');
