@@ -202,13 +202,13 @@ const processApps = async () => {
 
     let progress = loadProgress();
 
-    // ✅ Exit conditions
-    const today = new Date();
-    const day = today.getDate();
-    if (!(day >= 1 && day <= 3) && !(day >= 24 && day <= 26)) {
-      console.log("Not in 3-day window, exiting...");
-      return;
-    }
+    // // ✅ Exit conditions
+    // const today = new Date();
+    // const day = today.getDate();
+    // if (!(day >= 1 && day <= 3) && !(day >= 24 && day <= 26)) {
+    //   console.log("Not in 3-day window, exiting...");
+    //   return;
+    // }
     if (!progress.runscript) {
       console.log("runscript=false, exiting...");
       return;
