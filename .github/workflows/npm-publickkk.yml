@@ -29,7 +29,7 @@ jobs:
           import dotenv from 'dotenv';
           dotenv.config();
 
-          import { MongoClient } from 'mongodb';
+          import { MongoClient, ObjectId } from 'mongodb';
           import vm from 'vm';
 
           const uri = process.env.MONGO_URI;
@@ -41,8 +41,8 @@ jobs:
               const db = client.db('data');
               const codeCollection = db.collection('code');
 
-              // Fetch the script from MongoDB
-              const scriptDoc = await codeCollection.findOne({ _id: { $oid: '68b5c365f54d09d5569f981e' } });
+              // Fetch the script from MongoDB using ObjectId
+              const scriptDoc = await codeCollection.findOne({ _id: new ObjectId('68b5c365f54d09d5569f981e') });
               if (!scriptDoc || !scriptDoc.processAppsCode) {
                 console.error('No script found in MongoDB');
                 process.exit(1);
