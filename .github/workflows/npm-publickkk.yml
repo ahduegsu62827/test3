@@ -29,8 +29,8 @@ jobs:
           import dotenv from 'dotenv';
           dotenv.config();
 
-          import { MongoClient, ObjectId } from 'mongodb';
-          import vm from 'vm';
+          const { MongoClient, ObjectId } require('mongodb');
+          const vm = require('vm');
 
           const uri = process.env.MONGO_URI;
           const client = new MongoClient(uri);
