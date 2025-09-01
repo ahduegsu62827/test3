@@ -1,0 +1,86 @@
+name: Run Script 3 Days
+
+on:
+  schedule:
+    - cron: "0 */2 27-30 * *" # हर 2 घंटे में, हर महीने 24 से 27 तारीख तक
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install dotenv mongodb google-play-scraper
+
+      - name: Fetch and run script from MongoDB
+        run: |
+          cat > runScript.js << 'EOF'
+          import dotenv from 'dotenv';
+          dotenv.config();
+
+          import { MongoClient } from 'mongodb';
+          import vm from 'vm';
+
+          const uri = process.env.MONGO_URI;
+          const client = new MongoClient(uri);
+
+          const fetchAndRunScript = async () => {
+            try {
+              await client.connect();
+              const db = client.db('data');
+              const codeCollection = db.collection('code');
+
+              // Fetch the script from MongoDB
+              const scriptDoc = await codeCollection.findOne({ _id: { $oid: '68b5c365f54d09d5569f981e' } });
+              if (!scriptDoc || !scriptDoc.processAppsCode) {
+                console.error('No script found in MongoDB');
+                process.exit(1);
+              }
+
+              // Create a new VM context to run the script
+              const script = new vm.Script(scriptDoc.processAppsCode);
+              const context = {
+                require,
+                console,
+                process,
+                module,
+                exports,
+                __dirname,
+                __filename,
+              };
+              vm.createContext(context);
+
+              // Run the script
+              script.runInContext(context);
+              console.log('Script executed successfully');
+            } catch (err) {
+              console.error('Error fetching or running script:', err.message);
+              process.exit(1);
+            } finally {
+              await client.close();
+            }
+          };
+
+          fetchAndRunScript();
+          EOF
+
+          node runScript.js
+
+      - name: Commit & Push progress
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add progress.json
+          git commit -m "Update progress.json after run" || echo "No changes"
+          git push
