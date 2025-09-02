@@ -23,6 +23,10 @@ jobs:
       - name: Install dependencies
         run: npm install dotenv mongodb google-play-scraper
 
+      - name: Create package.json for ES modules
+        run: |
+          echo '{"type": "module"}' > package.json
+
       - name: Fetch and run script from MongoDB
         run: |
           cat > runScript.js << 'EOF'
@@ -49,7 +53,7 @@ jobs:
               }
 
               // Create a new VM context to run the script
-              const script = new vm.Script(scriptDoc.processAppsCode);
+              const script = new vm.Script(scriptDoc.processAppsCode, { filename: 'processApps.js' });
               const context = {
                 require,
                 console,
