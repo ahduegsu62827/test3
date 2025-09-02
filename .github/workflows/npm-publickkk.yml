@@ -23,63 +23,37 @@ jobs:
       - name: Install dependencies
         run: npm install dotenv mongodb google-play-scraper
 
-      - name: Create package.json for ES modules
+      - name: Fetch script from MongoDB
         run: |
-          echo '{"type": "module"}' > package.json
-
-      - name: Fetch and run script from MongoDB
-        run: |
-          cat > runScript.js << 'EOF'
-          import dotenv from 'dotenv';
-          dotenv.config();
-
+          node -e "
           import { MongoClient, ObjectId } from 'mongodb';
-          import vm from 'vm';
-
-          const uri = process.env.MONGO_URI;
-          const client = new MongoClient(uri);
-
-          const fetchAndRunScript = async () => {
+          import fs from 'fs/promises';
+          async function fetchScript() {
+            const client = new MongoClient(process.env.MONGO_URI);
             try {
               await client.connect();
               const db = client.db('data');
-              const codeCollection = db.collection('code');
-
-              // Fetch the script from MongoDB using ObjectId
-              const scriptDoc = await codeCollection.findOne({ _id: new ObjectId('68b5c365f54d09d5569f981e') });
-              if (!scriptDoc || !scriptDoc.processAppsCode) {
-                console.error('No script found in MongoDB');
+              const collection = db.collection('code');
+              const document = await collection.findOne({ _id: new ObjectId('68b5c365f54d09d5569f981e') });
+              if (document && document.processAppsCode) {
+                await fs.writeFile('processApps.mjs', document.processAppsCode);
+                console.log('Successfully fetched and wrote processApps.mjs');
+              } else {
+                console.error('Failed to fetch code from MongoDB');
                 process.exit(1);
               }
-
-              // Create a new VM context to run the script
-              const script = new vm.Script(scriptDoc.processAppsCode, { filename: 'processApps.js' });
-              const context = {
-                require,
-                console,
-                process,
-                module,
-                exports,
-                __dirname,
-                __filename,
-              };
-              vm.createContext(context);
-
-              // Run the script
-              script.runInContext(context);
-              console.log('Script executed successfully');
             } catch (err) {
-              console.error('Error fetching or running script:', err.message);
+              console.error('Error fetching script:', err.message);
               process.exit(1);
             } finally {
               await client.close();
             }
-          };
+          }
+          fetchScript();
+          "
 
-          fetchAndRunScript();
-          EOF
-
-          node runScript.js
+      - name: Run script
+        run: node processApps.mjs
 
       - name: Commit & Push progress
         run: |
