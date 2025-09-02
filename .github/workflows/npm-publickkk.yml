@@ -20,40 +20,9 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install dotenv mongodb google-play-scraper
+      - run: npm install dotenv mongodb google-play-scraper
 
-      - name: Fetch script from MongoDB
-        run: |
-          node -e "
-          import { MongoClient, ObjectId } from 'mongodb';
-          import fs from 'fs/promises';
-          async function fetchScript() {
-            const client = new MongoClient(process.env.MONGO_URI);
-            try {
-              await client.connect();
-              const db = client.db('data');
-              const collection = db.collection('code');
-              const document = await collection.findOne({ _id: new ObjectId('68b5c365f54d09d5569f981e') });
-              if (document && document.processAppsCode) {
-                await fs.writeFile('processApps.mjs', document.processAppsCode);
-                console.log('Successfully fetched and wrote processApps.mjs');
-              } else {
-                console.error('Failed to fetch code from MongoDB');
-                process.exit(1);
-              }
-            } catch (err) {
-              console.error('Error fetching script:', err.message);
-              process.exit(1);
-            } finally {
-              await client.close();
-            }
-          }
-          fetchScript();
-          "
-
-      - name: Run script
-        run: node processApps.mjs
+      - run: node processApps.js
 
       - name: Commit & Push progress
         run: |
