@@ -1,27 +1,27 @@
-name: Reset Run Script Flag
+# name: Reset Run Script Flag
 
-on:
-  schedule:
-    - cron: "0 0 4 * *"   # हर महीने 4 तारीख को midnight पर
-  workflow_dispatch:
+# on:
+#   schedule:
+#     - cron: "0 0 4 * *"   # हर महीने 4 तारीख को midnight पर
+#   workflow_dispatch:
 
-jobs:
-  reset:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+# jobs:
+#   reset:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Reset progress.json
-        run: |
-          jq '.runscript = true | .runCountInMonth = 0 | .lastIndex = 0 | .processedCount = 0 | .updatedCount = 0 | .noChangeCount = 0' progress.json > tmp.json && mv tmp.json progress.json
-          cat progress.json
+#       - name: Reset progress.json
+#         run: |
+#           jq '.runscript = true | .runCountInMonth = 0 | .lastIndex = 0 | .processedCount = 0 | .updatedCount = 0 | .noChangeCount = 0' progress.json > tmp.json && mv tmp.json progress.json
+#           cat progress.json
 
-      - name: Commit & Push
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add progress.json
-          git commit -m "Reset runscript for new month" || echo "No changes"
-          git push
+#       - name: Commit & Push
+#         run: |
+#           git config user.name "github-actions"
+#           git config user.email "github-actions@github.com"
+#           git add progress.json
+#           git commit -m "Reset runscript for new month" || echo "No changes"
+#           git push
