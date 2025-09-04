@@ -1,33 +1,33 @@
-name: Run Script 3 Days
+# name: Run Script 3 Days
 
-on:
-  schedule:
-    - cron: "0 */2 27-30 * *" # हर 2 घंटे में, हर महीने 27 से 30 तारीख तक
-  workflow_dispatch:
+# on:
+#   schedule:
+#     - cron: "0 */2 27-30 * *" # हर 2 घंटे में, हर महीने 27 से 30 तारीख तक
+#   workflow_dispatch:
 
-jobs:
-  update:
-    runs-on: ubuntu-latest
-    env:
-      MONGO_URI: ${{ secrets.MONGO_URI }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+# jobs:
+#   update:
+#     runs-on: ubuntu-latest
+#     env:
+#       MONGO_URI: ${{ secrets.MONGO_URI }}
+#     steps:
+#       - uses: actions/checkout@v3
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+#       - name: Setup Node
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: 18
 
-      - run: npm install dotenv mongodb google-play-scraper
+#       - run: npm install dotenv mongodb google-play-scraper
 
-      - run: node loader.js
+#       - run: node loader.js
 
-      - name: Commit & Push progress
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add progress.json
-          git commit -m "Update progress.json after run" || echo "No changes"
-          git push
+#       - name: Commit & Push progress
+#         run: |
+#           git config user.name "github-actions"
+#           git config user.email "github-actions@github.com"
+#           git add progress.json
+#           git commit -m "Update progress.json after run" || echo "No changes"
+#           git push
